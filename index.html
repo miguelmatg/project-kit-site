@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>project-kit</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="project-kit works with your AI agent to define a project, decide its stack, agree how the team works and plan the backlog, then sets up GitHub and hands over to Spec Kit.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --bg: #ffffff;
+  --bg-subtle: #fafafa;
+  --fg: #0a0a0a;
+  --muted: #5f5f5f;
+  --border: #e8e8e8;
+  --border-strong: #d4d4d4;
+  --accent: #0a66e4;
+  --code: #f4f4f4;
+  --ok: #18794e;
+  --warn: #a86b00;
+  --sans: "Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a0a0a; --bg-subtle: #111111; --fg: #ededed; --muted: #a0a0a0; --border: #232323;
+    --border-strong: #333333; --accent: #4c91ff; --code: #161616; --ok: #4cc38a; --warn: #e3a52f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0a0a0a; --bg-subtle: #111111; --fg: #ededed; --muted: #a0a0a0; --border: #232323;
+  --border-strong: #333333; --accent: #4c91ff; --code: #161616; --ok: #4cc38a; --warn: #e3a52f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scrollbar-color: var(--border-strong) var(--bg); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition: none !important; animation: none !important; } }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 400 16px/1.6 var(--sans); -webkit-font-smoothing: antialiased; caret-color: var(--accent); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 20; background: var(--bg); }
+::selection { background: color-mix(in srgb, var(--accent) 28%, transparent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; letter-spacing: -0.03em; }
+p, li { text-wrap: pretty; }
+p { margin: 0; }
+a { color: inherit; text-underline-offset: 3px; text-decoration-color: var(--border-strong); }
+a:hover { text-decoration-color: currentColor; }
+code { font-family: var(--mono); font-size: 0.88em; }
+:not(pre) > code { background: var(--code); border: 1px solid var(--border); border-radius: 5px; padding: 0.08em 0.36em; }
+button { font: inherit; color: inherit; cursor: pointer; }
+svg { flex: none; }
+
+#app[data-lang="en"] [lang="es"], #app[data-lang="es"] [lang="en"] { display: none !important; }
+
+.wrap {
+  max-width: 1120px; margin: 0 auto;
+  padding-left: max(24px, env(safe-area-inset-left, 0px));
+  padding-right: max(24px, env(safe-area-inset-right, 0px));
+}
+@media (max-width: 480px) { .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); } }
+
+/* header */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: saturate(1.4) blur(10px); -webkit-backdrop-filter: saturate(1.4) blur(10px); border-bottom: 1px solid var(--border); }
+.nav .wrap { display: flex; align-items: center; gap: 28px; height: 60px; }
+.mark { display: flex; align-items: center; gap: 9px; font-weight: 600; letter-spacing: -0.02em; text-decoration: none; }
+.nav-links { display: flex; gap: 22px; margin-right: auto; }
+.nav-links a { text-decoration: none; color: var(--muted); font-size: 0.92rem; transition: color .15s; }
+.nav-links a:hover { color: var(--fg); }
+.nav-end { display: flex; align-items: center; gap: 10px; }
+.lang { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; padding: 2px; }
+.lang button { border: 0; background: none; padding: 3px 9px; font-size: 0.8rem; font-weight: 500; border-radius: 5px; color: var(--muted); }
+.lang button[aria-pressed="true"] { background: var(--code); color: var(--fg); }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 7px; font-size: 0.88rem; font-weight: 500; text-decoration: none; border: 1px solid var(--border); background: var(--bg); transition: background .15s, border-color .15s; }
+.btn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+@media (max-width: 720px) { .nav-links { display: none; } .nav .wrap { justify-content: space-between; } }
+
+/* hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr); gap: 56px; align-items: center; padding-block: 88px 80px; }
+.hero h1 { font-size: clamp(2.4rem, 5vw, 3.75rem); font-weight: 600; line-height: 1.04; letter-spacing: -0.04em; }
+.hero .sub { margin-top: 20px; font-size: 1.12rem; color: var(--muted); max-width: 34em; }
+.install { margin-top: 32px; display: flex; align-items: center; gap: 12px; width: 100%; min-width: 0; max-width: 440px; min-height: 48px; padding: 6px 6px 6px 16px; border: 1px solid var(--border-strong); border-radius: 9px; background: var(--bg-subtle); font-family: var(--mono); font-size: 0.93rem; }
+.install .dollar { color: var(--muted); user-select: none; }
+.install code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; background: none; border: 0; padding: 0; font-size: 1em; scrollbar-width: none; }
+.copy { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border: 0; border-radius: 6px; background: var(--fg); color: var(--bg); font: 500 0.82rem var(--sans); transition: background .15s; }
+.copy:hover { background: color-mix(in srgb, var(--fg) 84%, var(--bg)); }
+.meta { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.86rem; color: var(--muted); }
+.meta a { color: var(--fg); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+.meta a:hover { color: var(--accent); }
+@media (max-width: 900px) { .hero { grid-template-columns: minmax(0, 1fr); gap: 40px; padding-block: 56px 56px; } }
+@media (max-width: 420px) {
+  .copy .copy-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .copy { padding: 0 11px; }
+  .install { font-size: 0.8rem; gap: 8px; padding-left: 12px; }
+}
+
+.window { border: 1px solid var(--border-strong); border-radius: 12px; background: var(--bg); box-shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 18px 40px -18px rgb(0 0 0 / 0.2); overflow: hidden; min-width: 0; }
+.window-bar { display: flex; align-items: center; gap: 12px; min-height: 38px; padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--bg-subtle); font-size: 0.78rem; color: var(--muted); }
+.dots { display: flex; gap: 6px; }
+.dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--border-strong); }
+.window-bar .tag { margin-left: auto; border: 1px solid var(--border); border-radius: 999px; padding: 1px 9px; line-height: 1.4; }
+.session { padding: 20px 22px 22px; font: 400 0.84rem/1.7 var(--mono); display: grid; gap: 12px; overflow-x: auto; }
+.session .sh::before { content: "$ "; color: var(--muted); }
+.session .dim { color: var(--muted); }
+.session .ok { color: var(--ok); }
+.session .you { justify-self: end; background: var(--code); border: 1px solid var(--border); border-radius: 8px; padding: 2px 10px; }
+.session .agent { font-family: var(--sans); font-size: 0.93rem; line-height: 1.55; }
+.session .agent b { font-weight: 600; }
+.choices { display: grid; gap: 5px; font-family: var(--sans); font-size: 0.9rem; }
+.choices > span { display: flex; align-items: center; gap: 9px; color: var(--muted); }
+.choices > span::before { content: ""; width: 12px; height: 12px; border-radius: 50%; border: 1.5px solid var(--border-strong); flex: none; }
+.choices .on { color: var(--fg); }
+.choices .on::before { border: 4px solid var(--accent); }
+.choices em { font-style: normal; color: var(--accent); font-size: 0.8rem; }
+
+/* sections */
+.section { padding-block: 96px; border-top: 1px solid var(--border); }
+.section-head { display: grid; gap: 14px; max-width: 640px; margin-bottom: 48px; }
+.section-head h2 { font-size: clamp(1.8rem, 3.2vw, 2.4rem); font-weight: 600; line-height: 1.1; }
+.section-head p { color: var(--muted); font-size: 1.06rem; }
+@media (max-width: 720px) { .section { padding-block: 64px; } .section-head { margin-bottom: 32px; } }
+
+/* phases */
+.phases { display: grid; grid-template-columns: 272px minmax(0, 1fr); grid-template-rows: 1fr auto; grid-template-areas: "list body" "mode body"; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.phase-list { grid-area: list; border-right: 1px solid var(--border); background: var(--bg-subtle); display: flex; flex-direction: column; padding: 8px; gap: 2px; }
+.phase-tab { display: grid; grid-template-columns: 22px minmax(0, 1fr); align-items: center; gap: 10px; text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 7px; color: var(--muted); transition: background .15s, color .15s, opacity .2s; }
+.phase-tab:hover { color: var(--fg); background: color-mix(in srgb, var(--fg) 4%, transparent); }
+.phase-tab .n { font: 500 0.78rem var(--mono); font-variant-numeric: tabular-nums; }
+.phase-tab .t { font-weight: 500; }
+.phase-tab .s { display: block; font: 400 0.74rem var(--mono); color: var(--muted); }
+.phase-tab[aria-selected="true"] { background: var(--bg); color: var(--fg); box-shadow: 0 0 0 1px var(--border), 0 1px 2px rgb(0 0 0 / 0.05); }
+.phase-tab[aria-selected="true"] .n { color: var(--accent); }
+.phase-tab.skipped { opacity: 0.5; }
+.phase-tab.skipped .t { text-decoration: line-through; text-decoration-color: var(--muted); }
+.mode { grid-area: mode; padding: 14px 18px 16px; border-top: 1px solid var(--border); border-right: 1px solid var(--border); background: var(--bg-subtle); display: grid; gap: 8px; font-size: 0.82rem; color: var(--muted); }
+.switch { display: inline-flex; border: 1px solid var(--border); border-radius: 7px; padding: 2px; background: var(--bg); width: max-content; }
+.switch button { border: 0; background: none; padding: 4px 12px; border-radius: 5px; font-size: 0.82rem; font-weight: 500; color: var(--muted); }
+.switch button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.phase-body { grid-area: body; padding: 32px 36px 36px; display: grid; gap: 28px; align-content: start; min-width: 0; }
+.phase-body.enter { animation: enter .32s cubic-bezier(.16, 1, .3, 1); }
+@keyframes enter { from { opacity: 0.2; transform: translateY(6px); filter: blur(2px); } to { opacity: 1; transform: none; filter: none; } }
+.phase-title { display: grid; gap: 10px; }
+.phase-title h3 { font-size: 1.6rem; font-weight: 600; line-height: 1.15; }
+.phase-title p { color: var(--muted); max-width: 62ch; }
+.phase-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+.phase-grid h4 { margin-bottom: 10px; font-size: 0.85rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.phase-grid ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.phase-grid li { display: flex; gap: 10px; align-items: baseline; }
+.phase-grid li::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--border-strong); flex: none; transform: translateY(-2px); }
+.files { display: grid; gap: 7px; }
+.file { display: flex; align-items: center; gap: 8px; font: 400 0.85rem var(--mono); overflow-wrap: anywhere; }
+.file svg { color: var(--muted); }
+.gate { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 16px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg-subtle); font-size: 0.92rem; }
+.gate code { font-size: 0.85rem; }
+.gate .runs { color: var(--accent); font-family: var(--mono); font-size: 0.85rem; }
+@media (max-width: 820px) {
+  .phases { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; grid-template-areas: "list" "mode" "body"; }
+  .phase-list { border-right: 0; border-bottom: 1px solid var(--border); flex-direction: row; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(to right, #000 80%, transparent); mask-image: linear-gradient(to right, #000 80%, transparent); padding-right: 72px; }
+  .phase-tab { grid-template-columns: auto; white-space: nowrap; }
+  .phase-tab .n, .phase-tab .s { display: none; }
+  .mode { border-top: 0; border-right: 0; border-bottom: 1px solid var(--border); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .phase-body { padding: 24px 20px 28px; }
+  .phase-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.handoff { margin-top: 20px; display: flex; gap: 8px 12px; align-items: baseline; flex-wrap: wrap; color: var(--muted); font-size: 0.95rem; }
+
+/* usage */
+.steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.step { padding: 28px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.step + .step { border-left: 1px solid var(--border); }
+.step .n { font: 500 0.8rem var(--mono); color: var(--accent); }
+.step h3 { font-size: 1.1rem; font-weight: 600; letter-spacing: -0.02em; }
+.step p { color: var(--muted); font-size: 0.95rem; }
+.step pre { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--code); border: 1px solid var(--border); font: 400 0.84rem/1.7 var(--mono); overflow-x: auto; }
+.step pre .c { color: var(--muted); }
+@media (max-width: 860px) { .steps { grid-template-columns: minmax(0, 1fr); } .step + .step { border-left: 0; border-top: 1px solid var(--border); } }
+
+.ask { margin-top: 72px; display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 48px; align-items: start; }
+.ask h3 { font-size: 1.5rem; font-weight: 600; line-height: 1.2; }
+.ask .lead { margin-top: 12px; color: var(--muted); }
+.prompts { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
+.prompt { border: 1px solid var(--border); background: var(--bg); border-radius: 999px; padding: 6px 14px; font-size: 0.9rem; color: var(--muted); transition: border-color .15s, color .15s; }
+.prompt:hover { color: var(--fg); border-color: var(--border-strong); }
+.prompt[aria-pressed="true"] { color: var(--fg); border-color: var(--fg); }
+.answer { border: 1px solid var(--border); border-radius: 12px; padding: 24px; display: grid; gap: 16px; min-width: 0; }
+.answer .said { justify-self: end; background: var(--code); border: 1px solid var(--border); border-radius: 10px; padding: 6px 14px; }
+.answer .uses { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.88rem; color: var(--muted); }
+.pill { font: 500 0.82rem var(--mono); color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, transparent); border-radius: 6px; padding: 2px 8px; }
+.answer ol { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; }
+.answer ol li::marker { color: var(--muted); font-size: 0.85em; }
+@media (max-width: 860px) { .ask { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 56px; } }
+
+/* guarantees */
+.rules { border-top: 1px solid var(--border); }
+.rule { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 16em); gap: 8px 48px; padding: 20px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.rule > div { display: grid; gap: 4px; }
+.rule h3 { font-size: 1.02rem; font-weight: 600; letter-spacing: -0.015em; }
+.rule p { color: var(--muted); font-size: 0.95rem; max-width: 64ch; }
+.rule > code { background: none; border: 0; padding: 0; font-size: 0.85rem; color: var(--fg); overflow-wrap: anywhere; }
+@media (max-width: 640px) { .rule { grid-template-columns: minmax(0, 1fr); } }
+
+/* tokens */
+.row { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 48px; padding-block: 40px; border-top: 1px solid var(--border); align-items: start; }
+.row:first-child { border-top: 0; padding-top: 0; }
+.row:last-child { padding-bottom: 0; }
+.row h3 { font-size: 1.25rem; font-weight: 600; line-height: 1.25; }
+.row .txt { display: grid; gap: 12px; }
+.row .txt p { color: var(--muted); }
+.row .txt .small { font-size: 0.88rem; }
+@media (max-width: 860px) { .row { grid-template-columns: minmax(0, 1fr); gap: 20px; } }
+.tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th { text-align: left; font-weight: 500; color: var(--muted); font-size: 0.82rem; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--bg-subtle); }
+td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.m { font-family: var(--mono); font-size: 0.85rem; white-space: nowrap; }
+.model { font: 500 0.8rem var(--mono); padding: 2px 8px; border-radius: 5px; border: 1px solid var(--border); white-space: nowrap; }
+.model.small { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.model.inline { display: none; }
+@media (max-width: 480px) {
+  .subagents th:nth-child(3), .subagents td:nth-child(3) { display: none; }
+  .subagents td.m { white-space: normal; }
+  .model.inline { display: inline-block; margin-top: 6px; }
+}
+.flow { display: grid; gap: 14px; counter-reset: f; }
+.flow > div { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
+.flow > div::before { counter-increment: f; content: counter(f); font: 500 0.75rem var(--mono); color: var(--muted); border: 1px solid var(--border); border-radius: 50%; width: 24px; height: 24px; display: grid; place-items: center; }
+.flow pre { margin: 8px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--code); border: 1px solid var(--border); font: 400 0.82rem/1.6 var(--mono); overflow-x: auto; }
+.measure { display: grid; gap: 14px; }
+.bar { display: grid; grid-template-columns: 8.5em minmax(0, 1fr) 5.5em; gap: 14px; align-items: center; font-size: 0.9rem; }
+.bar .track { height: 10px; border-radius: 999px; background: var(--code); border: 1px solid var(--border); overflow: hidden; }
+.bar .fill { height: 100%; border-radius: 999px; background: var(--border-strong); }
+.bar.with .fill { background: var(--accent); }
+.bar .v { font: 500 0.85rem var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
+.measure .cap { font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 480px) { .bar { grid-template-columns: 1fr auto; } .bar .track { grid-column: 1 / -1; grid-row: 2; } }
+
+/* commands */
+.search { position: relative; max-width: 360px; margin-bottom: 20px; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search input { width: 100%; height: 40px; padding: 0 14px 0 36px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); font: 400 0.92rem var(--sans); }
+.search input::placeholder { color: var(--muted); }
+.search input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.cmds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; }
+.cmd { display: grid; grid-template-columns: minmax(0, 15.5em) minmax(0, 1fr); gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.cmd code { background: none; border: 0; padding: 0; font-weight: 500; overflow-wrap: anywhere; }
+.cmd p { color: var(--muted); font-size: 0.92rem; }
+.empty { color: var(--muted); padding: 12px 0; }
+@media (max-width: 900px) { .cmds { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .cmd { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+/* compatibility */
+.compat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
+@media (max-width: 860px) { .compat { grid-template-columns: minmax(0, 1fr); } }
+.status { display: inline-flex; align-items: center; gap: 8px; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--border-strong); flex: none; }
+.status.ok::before { background: var(--ok); }
+.status.exp::before { background: var(--warn); }
+
+/* closing */
+.close { padding-block: 104px; border-top: 1px solid var(--border); display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; justify-items: start; }
+.close h2 { font-size: clamp(1.9rem, 3.8vw, 2.75rem); font-weight: 600; line-height: 1.08; }
+.close .install { margin-top: 8px; }
+.close .note { color: var(--muted); }
+footer { border-top: 1px solid var(--border); }
+footer .wrap { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-block: 28px; font-size: 0.88rem; color: var(--muted); }
+footer nav { display: flex; gap: 20px; flex-wrap: wrap; }
+footer a { text-decoration: none; }
+footer a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-file" viewBox="0 0 16 16"><path d="M4 1.75h5.25L12.5 5v9.25H4z M9 1.75V5.25h3.5" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linejoin="round"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.25" y="5.25" width="8" height="8" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.25"/><path d="M10.75 3.25v-.5a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h.5" fill="none" stroke="currentColor" stroke-width="1.25"/></symbol>
+  <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3.25 3.25L13 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="m10.5 10.5 3.25 3.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 20 20"><rect x="1" y="1" width="18" height="18" rx="5" fill="currentColor"/><path d="M6 6.5h8M6 10h5.5M6 13.5h3" stroke="var(--bg)" stroke-width="1.8" stroke-linecap="round"/></symbol>
+</svg>
+<div id="app" data-lang="en" data-mode="full">
+
+<header class="nav">
+  <div class="wrap">
+    <a class="mark" href="#top"><svg width="20" height="20" aria-hidden="true"><use href="#i-logo"/></svg>project-kit</a>
+    <nav class="nav-links" aria-label="Sections" data-label-es="Secciones">
+      <a href="#phases"><span lang="en">Phases</span><span lang="es">Fases</span></a>
+      <a href="#usage"><span lang="en">Usage</span><span lang="es">Uso</span></a>
+      <a href="#tokens">Tokens</a>
+      <a href="#commands"><span lang="en">Commands</span><span lang="es">Comandos</span></a>
+    </nav>
+    <div class="nav-end">
+      <div class="lang" role="group" aria-label="Language" data-label-es="Idioma">
+        <button type="button" id="lang-en" data-set-lang="en" aria-pressed="true">EN</button>
+        <button type="button" id="lang-es" data-set-lang="es" aria-pressed="false">ES</button>
+      </div>
+      <a class="btn" href="https://pypi.org/project/project-kit-cli/">PyPI</a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap">
+    <section class="hero">
+      <div>
+        <h1>
+          <span lang="en">Everything that happens before the first line of code.</span>
+          <span lang="es">Todo lo que pasa antes de la primera línea de código.</span>
+        </h1>
+        <p class="sub">
+          <span lang="en">project-kit works with your AI agent to define the project, decide the stack, agree how the team works and plan the backlog. Then it sets up GitHub and hands over to Spec Kit.</span>
+          <span lang="es">project-kit trabaja con tu agente de IA para definir el proyecto, decidir la pila, acordar cómo trabaja el equipo y planificar el backlog. Después prepara GitHub y se lo entrega a Spec Kit.</span>
+        </p>
+        <div class="install">
+          <span class="dollar">$</span><code id="install-cmd">uv tool install project-kit-cli</code>
+          <button class="copy" type="button" data-copy="install-cmd" aria-label="Copy the install command" data-label-es="Copiar el comando de instalación"><svg width="14" height="14" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label"><span lang="en">Copy</span><span lang="es">Copiar</span></span></button>
+        </div>
+        <p class="meta">
+          <span>Python 3.12+</span><span>MIT</span><span>Alpha</span>
+          <a href="#phases"><span lang="en">See the phases</span><span lang="es">Ver las fases</span><svg width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        </p>
+      </div>
+
+      <div class="window" role="img" aria-label="Example session: pjkit init, then /pk-start asks a question with a recommended answer, saves the brief and asks for approval." data-label-es="Sesión de ejemplo: pjkit init, después /pk-start hace una pregunta con una respuesta recomendada, guarda el resumen y pide la aprobación.">
+        <div class="window-bar"><span class="dots"><i></i><i></i><i></i></span><span>claude · my-app</span><span class="tag"><span lang="en">example</span><span lang="es">ejemplo</span></span></div>
+        <div class="session">
+          <div><span class="sh">pjkit init</span><br><span class="ok">created</span> <span class="dim">.project-kit/ · .claude/skills/pk-* · CLAUDE.md</span></div>
+          <div class="you">/pk-start</div>
+          <div class="agent">
+            <span lang="en"><b>Discover, question 2 of 9.</b> Who is the first version for?</span>
+            <span lang="es"><b>Descubrir, pregunta 2 de 9.</b> ¿Para quién es la primera versión?</span>
+          </div>
+          <div class="choices">
+            <span class="on"><span lang="en">Small teams that ship every week</span><span lang="es">Equipos pequeños que publican cada semana</span> <em><span lang="en">Recommended</span><span lang="es">Recomendada</span></em></span>
+            <span><span lang="en">Solo developers</span><span lang="es">Desarrolladores en solitario</span></span>
+            <span><span lang="en">Something else</span><span lang="es">Otra cosa</span></span>
+          </div>
+          <div class="agent dim"><span lang="en">Saved to docs/project/brief.md. Approve the brief?</span><span lang="es">Guardado en docs/project/brief.md. ¿Apruebas el resumen?</span></div>
+          <div><span class="sh">pjkit approve discover</span><br><span class="ok">approved</span> <span class="dim">discover · next: decide</span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="section" id="phases">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span lang="en">From an idea to issues, one phase at a time.</span><span lang="es">De una idea a las issues, fase a fase.</span></h2>
+        <p><span lang="en">Each phase is a skill your agent runs: one question at a time, a recommended answer for each, everything written to files in your repository. You sign off each phase before the next one starts.</span><span lang="es">Cada fase es una skill que ejecuta tu agente: una pregunta cada vez, una respuesta recomendada para cada una y todo escrito en ficheros de tu repositorio. Tú apruebas cada fase antes de que empiece la siguiente.</span></p>
+      </div>
+      <div class="phases">
+        <div class="phase-list" role="tablist" aria-label="Phases" data-label-es="Fases" id="phase-list"></div>
+        <div class="mode">
+          <span><span lang="en">Small project? Quick mode skips three phases.</span><span lang="es">¿Proyecto pequeño? El modo rápido se salta tres fases.</span></span>
+          <div class="switch" role="group" aria-label="Mode" data-label-es="Modo">
+            <button type="button" id="mode-full" data-set-mode="full" aria-pressed="true"><span lang="en">Full</span><span lang="es">Completo</span></button>
+            <button type="button" id="mode-quick" data-set-mode="quick" aria-pressed="false"><span lang="en">Quick</span><span lang="es">Rápido</span></button>
+          </div>
+        </div>
+        <div class="phase-body" id="phase-body" role="tabpanel"></div>
+      </div>
+      <p class="handoff">
+        <span lang="en">After the handoff, Spec Kit takes over: each issue is one spec.</span>
+        <span lang="es">Tras la entrega trabaja Spec Kit: cada issue es una especificación.</span>
+        <code>/speckit-specify → plan → tasks → implement</code>
+      </p>
+    </div>
+  </section>
+
+  <section class="section" id="usage">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span lang="en">Three steps, then just say “continue”.</span><span lang="es">Tres pasos y después solo «continúa».</span></h2>
+        <p><span lang="en">You can stop after any phase and come back another day. <code>pjkit status</code> always says where you are.</span><span lang="es">Puedes parar después de cualquier fase y volver otro día. <code>pjkit status</code> siempre dice dónde estás.</span></p>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <span class="n">1</span>
+          <h3><span lang="en">Install</span><span lang="es">Instala</span></h3>
+<pre>uv tool install project-kit-cli
+uv tool update-shell
+pjkit doctor</pre>
+          <p><span lang="en">Install it as a tool, not inside a project's environment: the skills call <code>pjkit</code> by name. For GitHub you need <code>gh</code> with the <code>repo</code> and <code>project</code> scopes.</span><span lang="es">Instálalo como herramienta, no dentro del entorno de un proyecto: las skills llaman a <code>pjkit</code> por su nombre. Para GitHub necesitas <code>gh</code> con los scopes <code>repo</code> y <code>project</code>.</span></p>
+        </div>
+        <div class="step">
+          <span class="n">2</span>
+          <h3><span lang="en">Initialise the repository</span><span lang="es">Inicializa el repositorio</span></h3>
+<pre>cd my-project
+pjkit init</pre>
+          <p><span lang="en">It asks a few setup questions and never overwrites a file, so it is safe in a repository with code. Useful options: <code>--mode quick</code>, <code>--from ./docs</code>, <code>--provider none</code>.</span><span lang="es">Hace unas preguntas de configuración y nunca sobrescribe un fichero, así que es seguro en un repositorio con código. Opciones útiles: <code>--mode quick</code>, <code>--from ./docs</code>, <code>--provider none</code>.</span></p>
+        </div>
+        <div class="step">
+          <span class="n">3</span>
+          <h3><span lang="en">Talk to your agent</span><span lang="es">Habla con tu agente</span></h3>
+<pre>/pk-start
+<span class="c"># later, any time:</span>
+continue</pre>
+          <p><span lang="en"><code>/pk-start</code> asks whether to only initialise or start now. After that, plain words are enough: the agent picks the right skill.</span><span lang="es"><code>/pk-start</code> pregunta si solo inicializar o empezar ya. Después basta con hablar normal: el agente elige la skill que toca.</span></p>
+        </div>
+      </div>
+
+      <div class="ask">
+        <div>
+          <h3><span lang="en">No skills to learn. Say what you want.</span><span lang="es">No hay skills que aprender. Di lo que quieres.</span></h3>
+          <p class="lead"><span lang="en"><code>init</code> writes a routing table into <code>CLAUDE.md</code> or <code>AGENTS.md</code>, so the agent maps your words to the right skill.</span><span lang="es"><code>init</code> escribe una tabla de rutas en <code>CLAUDE.md</code> o <code>AGENTS.md</code>, y el agente traduce lo que dices a la skill correcta.</span></p>
+          <div class="prompts" id="prompts" role="group" aria-label="Examples" data-label-es="Ejemplos"></div>
+        </div>
+        <div class="answer" id="answer" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="guarantees">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span lang="en">The agent proposes. You decide.</span><span lang="es">El agente propone. Tú decides.</span></h2>
+      </div>
+      <div class="rules">
+        <div class="rule"><div><h3><span lang="en">You sign off every phase</span><span lang="es">Tú apruebas cada fase</span></h3><p><span lang="en">Only you run it. “Continue” is never a sign-off, and a phase cannot be approved while an earlier one is open.</span><span lang="es">Solo lo ejecutas tú. «Continúa» nunca es una aprobación, y no se aprueba una fase con otra anterior abierta.</span></p></div><code>pjkit approve &lt;phase&gt;</code></div>
+        <div class="rule"><div><h3><span lang="en">No approved gaps</span><span lang="es">Sin huecos aprobados</span></h3><p><span lang="en">Sign-off is refused while these markers or empty template items remain.</span><span lang="es">La aprobación se rechaza mientras queden estas marcas o elementos de plantilla vacíos.</span></p></div><code>[NEEDS CLARIFICATION]</code></div>
+        <div class="rule"><div><h3><span lang="en">GitHub after a dry run</span><span lang="es">GitHub tras un dry run</span></h3><p><span lang="en">It shows what will be created. Nothing is written without your yes, and running it again never rewrites issues.</span><span lang="es">Enseña lo que se creará. No se escribe nada sin tu sí, y repetirlo nunca reescribe issues.</span></p></div><code>pjkit provision --dry-run</code></div>
+        <div class="rule"><div><h3><span lang="en">Never overwrites</span><span lang="es">Nunca sobrescribe</span></h3><p><span lang="en"><code>init</code> keeps your files, <code>upgrade</code> leaves your edits alone, and <code>uninstall</code> removes only what it added.</span><span lang="es"><code>init</code> respeta tus ficheros, <code>upgrade</code> no toca lo que editaste y <code>uninstall</code> quita solo lo que añadió.</span></p></div><code>pjkit upgrade --apply</code></div>
+        <div class="rule"><div><h3><span lang="en">Nothing installs itself</span><span lang="es">Nada se instala solo</span></h3><p><span lang="en">The status bar, the hooks and third-party skills only on a yes. For recommended skills it shows the command and you run it.</span><span lang="es">La barra de estado, los hooks y las skills de terceros, solo con un sí. De las skills recomendadas te enseña el comando y lo ejecutas tú.</span></p></div><code>pjkit skills show &lt;id&gt;</code></div>
+        <div class="rule"><div><h3><span lang="en">Done means verified</span><span lang="es">Hecho es comprobado</span></h3><p><span lang="en">Each acceptance criterion is checked with evidence, in a context separate from the one that wrote the code.</span><span lang="es">Cada criterio de aceptación se comprueba con pruebas, en un contexto distinto del que escribió el código.</span></p></div><code>/pk-verify</code></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="tokens">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span lang="en">Fewer tokens, less noise.</span><span lang="es">Menos tokens, menos ruido.</span></h2>
+        <p><span lang="en">Only what matters reaches the conversation. The first two work in Claude Code only.</span><span lang="es">A la conversación solo llega lo que importa. Las dos primeras funcionan solo en Claude Code.</span></p>
+      </div>
+      <div>
+        <div class="row">
+          <div class="txt">
+            <h3><span lang="en">Small models for work that needs no judgment</span><span lang="es">Modelos pequeños para lo que no necesita criterio</span></h3>
+            <p><span lang="en">Tests, an approved provision and saved scripts run in subagents with their own context. Only their short report comes back. None of them can edit files.</span><span lang="es">Los tests, un provision aprobado y los scripts guardados se ejecutan en subagentes con su propio contexto. Solo vuelve su informe corto. Ninguno puede editar ficheros.</span></p>
+            <p class="small"><span lang="en">Asked once at setup. Change it with <code>pjkit models set</code>.</span><span lang="es">Se pregunta una vez al configurar. Se cambia con <code>pjkit models set</code>.</span></p>
+          </div>
+          <div class="tbl">
+            <table class="subagents">
+              <thead><tr><th><span lang="en">Subagent</span><span lang="es">Subagente</span></th><th><span lang="en">Does</span><span lang="es">Hace</span></th><th><span lang="en">Recommended</span><span lang="es">Recomendado</span></th></tr></thead>
+              <tbody>
+                <tr><td class="m">pk-tester<br><span class="model small inline">haiku</span></td><td><span lang="en">Tests, lint and types; failures only</span><span lang="es">Tests, lint y tipos; solo los fallos</span></td><td><span class="model small">haiku</span></td></tr>
+                <tr><td class="m">pk-provisioner<br><span class="model small inline">haiku</span></td><td><span lang="en">Applies a provision you approved</span><span lang="es">Aplica un provision que aprobaste</span></td><td><span class="model small">haiku</span></td></tr>
+                <tr><td class="m">pk-runner<br><span class="model small inline">haiku</span></td><td><span lang="en">Runs saved or skill scripts</span><span lang="es">Ejecuta scripts guardados o de skills</span></td><td><span class="model small">haiku</span></td></tr>
+                <tr><td class="m">pk-reviewer<br><span class="model inline">sonnet</span></td><td><span lang="en">Judges whether a feature is done</span><span lang="es">Juzga si una funcionalidad está hecha</span></td><td><span class="model">sonnet</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="row">
+          <div class="txt">
+            <h3><span lang="en">Write the same code once</span><span lang="es">El mismo código, una sola vez</span></h3>
+            <p><span lang="en">A hook notes what each piece of code the agent writes uses: imports, calls, commands. It recognises the same job even when the names or the URL change.</span><span lang="es">Un hook apunta qué usa cada trozo de código que escribe el agente: imports, llamadas, comandos. Reconoce el mismo trabajo aunque cambien los nombres o la URL.</span></p>
+            <p class="small"><span lang="en">The memory stays local, with secrets removed. <code>pjkit actions</code> shows it.</span><span lang="es">La memoria es local y sin secretos. <code>pjkit actions</code> la muestra.</span></p>
+          </div>
+          <div class="flow">
+            <div><span><span lang="en">The agent writes the same script for the third time, for example to read a page's title and links.</span><span lang="es">El agente escribe el mismo script por tercera vez, por ejemplo para leer el título y los enlaces de una página.</span></span></div>
+            <div><span><span lang="en"><code>/pk-automate</code> asks once: save it, not now, or never.</span><span lang="es"><code>/pk-automate</code> pregunta una vez: guardarlo, ahora no o nunca.</span></span></div>
+            <div><span><span lang="en">From then on the agent runs the script instead of writing it:</span><span lang="es">Desde entonces el agente ejecuta el script en vez de escribirlo:</span><pre>uv run .project-kit/scripts/page_links.py URL</pre></span></div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="txt">
+            <h3><span lang="en">Short reports instead of long output</span><span lang="es">Informes cortos en vez de salidas largas</span></h3>
+            <p><span lang="en"><code>pjkit run</code>, <code>logs</code> and <code>peek</code> keep everything in a log and show only the failures and their context.</span><span lang="es"><code>pjkit run</code>, <code>logs</code> y <code>peek</code> guardan todo en un log y solo enseñan los fallos y su contexto.</span></p>
+            <p class="small"><span lang="en">With short output, such as 95 lines of tests, it costs an extra step and does not pay off.</span><span lang="es">Con salidas cortas, como 95 líneas de tests, cuesta un paso extra y no compensa.</span></p>
+          </div>
+          <div class="measure">
+            <div class="bar"><span><span lang="en">Without</span><span lang="es">Sin</span> pk-quiet</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">214,115</span></div>
+            <div class="bar with"><span><span lang="en">With</span><span lang="es">Con</span> pk-quiet</span><div class="track"><div class="fill" style="width:36%"></div></div><span class="v">77,070</span></div>
+            <p class="cap"><span lang="en">Tokens processed in a real Claude Code session (Sonnet) reading a 4,600-line log with 3 errors. Across two runs, 55–64% fewer, with the same errors found.</span><span lang="es">Tokens procesados en una sesión real de Claude Code (Sonnet) leyendo un log de 4.600 líneas con 3 errores. En dos repeticiones, entre un 55 % y un 64 % menos, con los mismos errores encontrados.</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="commands">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span lang="en">Commands</span><span lang="es">Comandos</span></h2>
+        <p><span lang="en">The skills run most of them for you. <code>pjkit help</code> lists them with your project's state.</span><span lang="es">Las skills ejecutan casi todos por ti. <code>pjkit help</code> los lista con el estado de tu proyecto.</span></p>
+      </div>
+      <div class="search">
+        <svg width="15" height="15" aria-hidden="true"><use href="#i-search"/></svg>
+        <input id="q" type="search" autocomplete="off" aria-label="Filter commands" data-label-es="Filtrar comandos" placeholder="provision, tests, scripts…">
+      </div>
+      <div class="cmds" id="cmds"></div>
+      <p class="empty" id="none" hidden><span lang="en">No command matches.</span><span lang="es">Ningún comando coincide.</span></p>
+    </div>
+  </section>
+
+  <section class="section" id="compat">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span lang="en">What it works with</span><span lang="es">Con qué funciona</span></h2>
+        <p><span lang="en">project-kit is in alpha. This is what has been tested and what has not.</span><span lang="es">project-kit está en alfa. Esto es lo que se ha probado y lo que no.</span></p>
+      </div>
+      <div class="compat">
+        <div class="tbl">
+          <table>
+            <thead><tr><th><span lang="en">Agent</span><span lang="es">Agente</span></th><th><span lang="en">Status</span><span lang="es">Estado</span></th></tr></thead>
+            <tbody>
+              <tr><td>Claude Code</td><td><span class="status ok"><span lang="en">Tested end to end</span><span lang="es">Probado de principio a fin</span></span></td></tr>
+              <tr><td>Codex CLI, Gemini CLI</td><td><span class="status"><span lang="en">Installed, untested</span><span lang="es">Instalado, sin probar</span></span></td></tr>
+              <tr><td>GitHub Copilot, Cursor</td><td><span class="status"><span lang="en">Installed, untested</span><span lang="es">Instalado, sin probar</span></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="tbl">
+          <table>
+            <thead><tr><th><span lang="en">Provider</span><span lang="es">Proveedor</span></th><th><span lang="en">Status</span><span lang="es">Estado</span></th></tr></thead>
+            <tbody>
+              <tr><td>GitHub</td><td><span class="status ok"><span lang="en">Tested, with <code>gh</code></span><span lang="es">Probado, con <code>gh</code></span></span></td></tr>
+              <tr><td>GitLab</td><td><span class="status exp"><span lang="en">Experimental, with <code>glab</code></span><span lang="es">Experimental, con <code>glab</code></span></span></td></tr>
+              <tr><td><code>--provider none</code></td><td><span class="status ok"><span lang="en">Files only, no service</span><span lang="es">Solo ficheros, sin servicio</span></span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap close">
+    <h2><span lang="en">Start your next project with a plan.</span><span lang="es">Empieza tu próximo proyecto con un plan.</span></h2>
+    <div class="install">
+      <span class="dollar">$</span><code id="install-cmd-2">uv tool install project-kit-cli</code>
+      <button class="copy" type="button" data-copy="install-cmd-2" aria-label="Copy the install command" data-label-es="Copiar el comando de instalación"><svg width="14" height="14" aria-hidden="true"><use href="#i-copy"/></svg><span class="copy-label"><span lang="en">Copy</span><span lang="es">Copiar</span></span></button>
+    </div>
+    <p class="note"><span lang="en">The full guides ship with the program: <code>pjkit docs</code> (in Spanish).</span><span lang="es">Las guías completas van con el programa: <code>pjkit docs</code>.</span></p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><span lang="en">project-kit · MIT license</span><span lang="es">project-kit · licencia MIT</span></span>
+    <nav aria-label="Links" data-label-es="Enlaces">
+      <a href="https://pypi.org/project/project-kit-cli/">PyPI</a>
+      <a href="https://github.com/github/spec-kit">Spec Kit</a>
+      <a href="https://docs.astral.sh/uv/">uv</a>
+    </nav>
+  </div>
+</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var app = document.getElementById("app");
+  var lang = "en";
+  function t(v) { return typeof v === "string" ? v : v[lang]; }
+  function store(key, value) {
+    try { if (value === undefined) return localStorage.getItem(key); localStorage.setItem(key, value); } catch (e) { return null; }
+    return null;
+  }
+  function icon(id, size) { return '<svg width="' + size + '" height="' + size + '" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+
+  var PHASES = [
+    { id: "init", n: "0", skill: "pk-start", name: { en: "Start", es: "Arrancar" },
+      title: { en: "Check the setup and choose how far to go today", es: "Comprobar el entorno y elegir hasta dónde llegar hoy" },
+      does: { en: "Runs <code>pjkit doctor</code>, reads the configuration back to you and asks whether to only initialise or start defining the project now.", es: "Ejecuta <code>pjkit doctor</code>, repasa la configuración contigo y pregunta si solo inicializar o empezar ya a definir el proyecto." },
+      asks: { en: ["Is the configuration right?", "May the AI appear as a commit co-author?", "Status bar, session hooks and subagent models?"], es: ["¿Es correcta la configuración?", "¿Puede la IA firmar como coautora de los commits?", "¿Barra de estado, hooks de sesión y modelos de los subagentes?"] },
+      out: [".project-kit/config.yml", ".project-kit/state.json", ".claude/skills/pk-*"], gate: null },
+    { id: "discover", n: "1", skill: "pk-discover", name: { en: "Discover", es: "Descubrir" },
+      title: { en: "The interview: what problem, for whom, how far", es: "La entrevista: qué problema, para quién y hasta dónde" },
+      does: { en: "One question at a time, each with a recommended answer. What you do not know yet is marked <code>[NEEDS CLARIFICATION]</code> instead of being made up.", es: "Una pregunta cada vez, cada una con una respuesta recomendada. Lo que aún no sabes queda marcado como <code>[NEEDS CLARIFICATION]</code> en lugar de inventarse." },
+      asks: { en: ["What problem does it solve, and for whom?", "What is in the first version, and what is not?", "Which constraints apply: deadline, budget, regulation?"], es: ["¿Qué problema resuelve y para quién?", "¿Qué entra en la primera versión y qué no?", "¿Qué restricciones hay: plazo, presupuesto, normativa?"] },
+      out: ["docs/project/brief.md"], gate: "discover" },
+    { id: "decide", n: "2", skill: "pk-decide", name: { en: "Decide", es: "Decidir" }, quickSkips: true,
+      title: { en: "The technical decisions, in writing", es: "Las decisiones técnicas, por escrito" },
+      does: { en: "Walks through each decision with its options and consequences and records it as an ADR. A later decision supersedes an earlier one; nothing is erased.", es: "Recorre cada decisión con sus opciones y consecuencias y la guarda como ADR. Una decisión posterior sustituye a otra; no se borra nada." },
+      asks: { en: ["Monolith or monorepo?", "Which language and database?", "How do people sign in, and where is it hosted?"], es: ["¿Monolito o monorepo?", "¿Qué lenguaje y qué base de datos?", "¿Cómo se accede y dónde se aloja?"] },
+      out: ["docs/adr/0001-*.md", "docs/adr/0002-*.md"], gate: "decide" },
+    { id: "workflow", n: "3", skill: "pk-workflow", name: { en: "Workflow", es: "Flujo" }, quickSkips: true,
+      title: { en: "How the team works", es: "Cómo trabaja el equipo" },
+      does: { en: "Agrees branches, reviews, quality gates and the merge strategy for each branch. The Spec Kit constitution is generated from it later.", es: "Acuerda ramas, revisiones, puertas de calidad y la estrategia de fusión de cada rama. Con ello se genera después la constitución de Spec Kit." },
+      asks: { en: ["Git flow or one main branch?", "Squash, merge or rebase on each branch?", "What must pass before a merge?"], es: ["¿Git flow o una rama principal?", "¿Squash, merge o rebase en cada rama?", "¿Qué tiene que pasar antes de fusionar?"] },
+      out: ["docs/development-workflow.md"], gate: "workflow" },
+    { id: "foundations", n: "4", skill: "pk-foundations", name: { en: "Foundations", es: "Reglas" }, quickSkips: true,
+      title: { en: "The project's rules, from its stack", es: "Las reglas del proyecto, a partir de su pila" },
+      does: { en: "Writes code, testing, security and documentation standards that fit the decisions you made, not a generic checklist.", es: "Escribe estándares de código, pruebas, seguridad y documentación que encajan con las decisiones tomadas, no una lista genérica." },
+      asks: { en: ["Which formatter and linter?", "What is tested, and where do tests live?", "How are secrets kept?"], es: ["¿Qué formateador y linter?", "¿Qué se prueba y dónde viven las pruebas?", "¿Cómo se guardan los secretos?"] },
+      out: ["docs/project/standards.md", "docs/project/testing.md", "docs/project/security.md", "docs/project/documentation.md"], gate: "foundations" },
+    { id: "plan", n: "5", skill: "pk-plan", name: { en: "Plan", es: "Planificar" },
+      title: { en: "Roadmap and backlog", es: "Hoja de ruta y backlog" },
+      does: { en: "Derives phases, epics and issues from everything before. Each issue gets named acceptance criteria, such as <code>login#2</code>, and the backlog is validated before sign-off.", es: "Deriva fases, épicas e issues de todo lo anterior. Cada issue tiene criterios de aceptación con nombre, como <code>login#2</code>, y el backlog se valida antes de aprobarlo." },
+      asks: { en: ["What goes into each phase?", "What priority and size does each issue have?", "What depends on what?"], es: ["¿Qué entra en cada fase?", "¿Qué prioridad y tamaño tiene cada issue?", "¿Qué depende de qué?"] },
+      out: ["docs/project/roadmap.md", ".project-kit/backlog.json"], gate: "plan" },
+    { id: "provision", n: "6", skill: "pk-provision", name: { en: "Provision", es: "Provisionar" },
+      title: { en: "The plan, published on GitHub", es: "El plan, publicado en GitHub" },
+      does: { en: "Creates milestones, labels, branches, a Project and the issues. It shows a dry run first and applies it only on your yes. Skipped with <code>--provider none</code>.", es: "Crea milestones, labels, ramas, un Project y las issues. Primero enseña un dry run y solo lo aplica con tu sí. Se salta con <code>--provider none</code>." },
+      asks: { en: ["Which GitHub Project should it use, or a new one?", "Create everything the dry run shows?"], es: ["¿Qué Project de GitHub usar, o uno nuevo?", "¿Crear todo lo que enseña el dry run?"] },
+      out: ["milestones, labels, branches", "Project and issues"], gate: null, files: false },
+    { id: "handoff", n: "7", skill: "pk-handoff", name: { en: "Handoff", es: "Entrega" },
+      title: { en: "The Spec Kit constitution, with your rules", es: "La constitución de Spec Kit, con tus reglas" },
+      does: { en: "Prepares the constitution input from your branches, merges, decisions and rules, and writes each agent's context file.", es: "Prepara la entrada de la constitución con tus ramas, fusiones, decisiones y reglas, y escribe el fichero de contexto de cada agente." },
+      asks: { en: ["Install Spec Kit now?"], es: ["¿Instalo Spec Kit ahora?"] },
+      out: [".project-kit/handoff/constitution-input.md", "CLAUDE.md, AGENTS.md, GEMINI.md"], gate: "handoff" }
+  ];
+  var current = "discover";
+  var list = document.getElementById("phase-list");
+  PHASES.forEach(function (p) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "phase-tab"; b.id = "tab-" + p.id;
+    b.setAttribute("role", "tab"); b.setAttribute("aria-controls", "phase-body");
+    b.innerHTML = '<span class="n">' + p.n + '</span><span><span class="t"></span><span class="s">/' + p.skill + "</span></span>";
+    b.addEventListener("click", function () { if (current !== p.id) { current = p.id; renderPhases(true); } });
+    list.appendChild(b);
+  });
+  list.addEventListener("keydown", function (e) {
+    if (!e.target.classList.contains("phase-tab")) return;
+    var keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
+    var i = PHASES.findIndex(function (p) { return p.id === current; });
+    if (e.key === "Home") i = 0;
+    else if (e.key === "End") i = PHASES.length - 1;
+    else if (e.key in keys) i = (i + keys[e.key] + PHASES.length) % PHASES.length;
+    else return;
+    current = PHASES[i].id;
+    renderPhases(true);
+    document.getElementById("tab-" + current).focus();
+    e.preventDefault();
+  });
+
+  function renderPhases(animate) {
+    var quick = app.dataset.mode === "quick";
+    PHASES.forEach(function (p) {
+      var b = document.getElementById("tab-" + p.id);
+      b.querySelector(".t").textContent = t(p.name);
+      b.setAttribute("aria-selected", String(p.id === current));
+      b.tabIndex = p.id === current ? 0 : -1;
+      b.classList.toggle("skipped", Boolean(p.quickSkips && quick));
+    });
+    var p = PHASES.filter(function (x) { return x.id === current; })[0];
+    var asks = t(p.asks).map(function (q) { return "<li>" + q + "</li>"; }).join("");
+    var outs = p.out.map(function (f) {
+      return '<span class="file">' + (p.files === false ? "" : icon("i-file", 14)) + "<span>" + f + "</span></span>";
+    }).join("");
+    var end;
+    if (p.quickSkips && quick) {
+      end = [{ en: "Skipped in quick mode: the stack is taken from the brief.", es: "Se salta en modo rápido: la pila se toma del resumen." }, "pjkit mode full"];
+    } else if (p.gate) {
+      end = [{ en: "Ends when you sign it off", es: "Termina cuando tú la apruebas" }, "pjkit approve " + p.gate];
+    } else if (p.id === "provision") {
+      end = [{ en: "Writes to GitHub only after your yes", es: "Escribe en GitHub solo tras tu sí" }, "pjkit provision --dry-run"];
+    } else {
+      end = [{ en: "No sign-off: it asks whether to go on or stop", es: "Sin aprobación: pregunta si seguir o parar" }, "pjkit status"];
+    }
+    var body = document.getElementById("phase-body");
+    body.setAttribute("aria-labelledby", "tab-" + p.id);
+    body.innerHTML =
+      '<div class="phase-title"><h3>' + t(p.title) + "</h3><p>" + t(p.does) + "</p></div>" +
+      '<div class="phase-grid"><div><h4>' + t({ en: "It will ask you", es: "Te preguntará" }) + "</h4><ul>" + asks + "</ul></div>" +
+      "<div><h4>" + t({ en: "It writes", es: "Escribe" }) + '</h4><div class="files">' + outs + "</div></div></div>" +
+      '<div class="gate"><span><span class="runs">/' + p.skill + "</span> · " + t(end[0]) + "</span><code>" + end[1] + "</code></div>";
+    if (animate) { body.classList.remove("enter"); void body.offsetWidth; body.classList.add("enter"); }
+  }
+
+  var PROMPTS = [
+    { say: { en: "continue", es: "continúa" }, skill: "pk-next",
+      steps: { en: ["Runs <code>pjkit next</code> and sees that <em>decide</em> comes next.", "Follows <code>pk-decide</code> from where you left off.", "Offers <code>pk-grill</code> before the sign-off, and never chains two phases without asking."], es: ["Ejecuta <code>pjkit next</code> y ve que toca <em>decide</em>.", "Sigue <code>pk-decide</code> donde lo dejaste.", "Ofrece <code>pk-grill</code> antes de aprobar y nunca encadena dos fases sin preguntar."] } },
+    { say: { en: "I already have a PRD", es: "ya tengo un PRD" }, skill: "pk-import",
+      steps: { en: ["<code>pjkit import ./old-docs</code> copies it to <code>docs/sources/</code> without touching the original.", "Drafts the brief, decisions and backlog, citing the source of each claim.", "Marks what the documents do not say and asks about contradictions."], es: ["<code>pjkit import ./docs-viejos</code> lo copia a <code>docs/sources/</code> sin tocar el original.", "Redacta el resumen, las decisiones y el backlog citando la fuente de cada afirmación.", "Marca lo que los documentos no dicen y pregunta por las contradicciones."] } },
+    { say: { en: "challenge this plan", es: "desafía este plan" }, skill: "pk-grill",
+      steps: { en: ["Cross-checks the brief, decisions and backlog for contradictions.", "Asks the hard questions, one at a time.", "Puts what changes back into the documents before the sign-off."], es: ["Cruza el resumen, las decisiones y el backlog buscando contradicciones.", "Hace las preguntas difíciles, una por una.", "Lleva lo que cambie a los documentos antes de aprobar."] } },
+    { say: { en: "the scope changed", es: "el alcance ha cambiado" }, skill: "pk-amend",
+      steps: { en: ["Adds the new epic, or a decision that supersedes an old one.", "Updates the backlog and validates it.", "<code>pjkit provision</code> then creates only what is missing."], es: ["Añade la épica nueva o una decisión que sustituye a otra.", "Actualiza el backlog y lo valida.", "Después <code>pjkit provision</code> crea solo lo que falta."] } },
+    { say: { en: "is #34 really done?", es: "¿está de verdad hecha la #34?" }, skill: "pk-verify",
+      steps: { en: ["Reads the issue's acceptance criteria, not the implementer's summary.", "Runs the project's tests in a separate context.", "Gives a verdict per criterion with evidence, and touches no file."], es: ["Lee los criterios de aceptación de la issue, no el resumen de quien la hizo.", "Ejecuta las pruebas del proyecto en un contexto aparte.", "Da un veredicto por criterio con pruebas y no toca ningún fichero."] } },
+    { say: { en: "run the tests", es: "ejecuta los tests" }, skill: "pk-tester",
+      steps: { en: ["Hands the run to the <code>pk-tester</code> subagent, on a small model.", "<code>pjkit run -- pytest</code> keeps the full output in a log.", "Only the failures, with file and line, reach the conversation."], es: ["Pasa la ejecución al subagente <code>pk-tester</code>, con un modelo pequeño.", "<code>pjkit run -- pytest</code> guarda toda la salida en un log.", "A la conversación solo llegan los fallos, con fichero y línea."] } }
+  ];
+  var said = 0;
+  var promptsEl = document.getElementById("prompts");
+  PROMPTS.forEach(function (x, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "prompt"; b.id = "prompt-" + i;
+    b.addEventListener("click", function () { said = i; renderPrompts(); });
+    promptsEl.appendChild(b);
+  });
+  function renderPrompts() {
+    PROMPTS.forEach(function (x, i) {
+      var b = document.getElementById("prompt-" + i);
+      b.textContent = t(x.say);
+      b.setAttribute("aria-pressed", String(i === said));
+    });
+    var x = PROMPTS[said];
+    document.getElementById("answer").innerHTML =
+      '<span class="said">' + t(x.say) + "</span>" +
+      '<div class="uses">' + t({ en: "The agent uses", es: "El agente usa" }) + ' <span class="pill">' + x.skill + "</span></div>" +
+      "<ol>" + t(x.steps).map(function (s) { return "<li>" + s + "</li>"; }).join("") + "</ol>";
+  }
+
+  var CMDS = [
+    ["pjkit init", { en: "Install the skills and templates here. Never overwrites", es: "Instala las skills y plantillas aquí. Nunca sobrescribe" }],
+    ["pjkit doctor", { en: "Check git, gh or glab, uv and PATH", es: "Comprueba git, gh o glab, uv y el PATH" }],
+    ["pjkit status", { en: "The phases and what comes next", es: "Las fases y qué viene después" }],
+    ["pjkit next", { en: "What to tell your agent now", es: "Qué decirle ahora a tu agente" }],
+    ["pjkit approve <phase>", { en: "Your sign-off of a phase. Only you run it", es: "Tu aprobación de una fase. Solo la ejecutas tú" }],
+    ["pjkit mode quick|full", { en: "How many phases the project goes through", es: "Cuántas fases recorre el proyecto" }],
+    ["pjkit import <path>", { en: "Copy existing documents for /pk-import", es: "Copia documentos existentes para /pk-import" }],
+    ["pjkit backlog validate", { en: "Validate .project-kit/backlog.json", es: "Valida .project-kit/backlog.json" }],
+    ["pjkit provision --dry-run", { en: "What will be created on GitHub or GitLab", es: "Lo que se creará en GitHub o GitLab" }],
+    ["pjkit handoff", { en: "The Spec Kit constitution input", es: "La entrada de la constitución de Spec Kit" }],
+    ["pjkit trace", { en: "Issues, decisions, specs and tests that are not linked", es: "Issues, decisiones, specs y tests sin enlazar" }],
+    ["pjkit run -- <command>", { en: "Run a command and get a short report", es: "Ejecuta un comando y da un informe corto" }],
+    ["pjkit logs <file>", { en: "Read a log without the repetition", es: "Lee un log sin la repetición" }],
+    ["pjkit peek <file>", { en: "Part of a file: outline, match or range", es: "Una parte de un fichero: esquema, búsqueda o tramo" }],
+    ["pjkit models", { en: "Which model each subagent uses", es: "Qué modelo usa cada subagente" }],
+    ["pjkit actions", { en: "Code the agent repeats, and the saved scripts", es: "Código que el agente repite y los scripts guardados" }],
+    ["pjkit hook install", { en: "Project state and action memory in Claude Code", es: "Estado del proyecto y memoria de acciones en Claude Code" }],
+    ["pjkit statusline --install", { en: "Model, limits and phase in the status bar", es: "Modelo, límites y fase en la barra de estado" }],
+    ["pjkit skills list", { en: "Recommended third-party skills", es: "Skills de terceros recomendadas" }],
+    ["pjkit upgrade --apply", { en: "Update skills and templates, keeping your edits", es: "Actualiza skills y plantillas sin tocar lo editado" }],
+    ["pjkit uninstall", { en: "Undo init, keeping what you edited", es: "Deshace init y conserva lo que editaste" }],
+    ["pjkit docs [topic]", { en: "The guides: quickstart, flow, automate", es: "Las guías: quickstart, flow, automate" }]
+  ];
+  function renderCmds() {
+    var q = document.getElementById("q").value.trim().toLowerCase();
+    var shown = 0;
+    document.getElementById("cmds").innerHTML = CMDS.map(function (c) {
+      var hit = !q || (c[0] + " " + c[1].en + " " + c[1].es).toLowerCase().indexOf(q) >= 0;
+      if (!hit) return "";
+      shown += 1;
+      return '<div class="cmd"><code>' + c[0].replace(/</g, "&lt;") + "</code><p>" + t(c[1]) + "</p></div>";
+    }).join("");
+    document.getElementById("none").hidden = shown > 0;
+  }
+  document.getElementById("q").addEventListener("input", renderCmds);
+
+  document.querySelectorAll("[data-copy]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var src = document.getElementById(b.dataset.copy);
+      var label = b.querySelector(".copy-label");
+      var use = b.querySelector("use");
+      function done() {
+        label.textContent = t({ en: "Copied", es: "Copiado" });
+        use.setAttribute("href", "#i-check");
+        setTimeout(function () {
+          label.innerHTML = '<span lang="en">Copy</span><span lang="es">Copiar</span>';
+          use.setAttribute("href", "#i-copy");
+        }, 1600);
+      }
+      function select() { var r = document.createRange(); r.selectNodeContents(src); var s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(src.textContent).then(done, select);
+      else select();
+    });
+  });
+
+  function setLang(l) {
+    lang = l; app.dataset.lang = l; document.documentElement.lang = l;
+    document.querySelectorAll("[data-set-lang]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.setLang === l)); });
+    document.querySelectorAll("[data-label-es]").forEach(function (el) {
+      if (!el.dataset.labelEn) el.dataset.labelEn = el.getAttribute("aria-label");
+      el.setAttribute("aria-label", l === "es" ? el.dataset.labelEs : el.dataset.labelEn);
+    });
+    store("pk-lang", l);
+    renderPhases(false); renderPrompts(); renderCmds();
+  }
+  function setMode(m) {
+    app.dataset.mode = m;
+    document.querySelectorAll("[data-set-mode]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.setMode === m)); });
+    renderPhases(true);
+  }
+  document.querySelectorAll("[data-set-lang]").forEach(function (b) { b.addEventListener("click", function () { setLang(b.dataset.setLang); }); });
+  document.querySelectorAll("[data-set-mode]").forEach(function (b) { b.addEventListener("click", function () { setMode(b.dataset.setMode); }); });
+
+  var saved = store("pk-lang");
+  setLang(saved === "es" || saved === "en" ? saved : "en");
+})();
+</script>
+</body>
+</html>

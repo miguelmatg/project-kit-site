@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>project-kit</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27%3E%3Cstyle%3E.t%7Bfill:%230a0a0a%7D.b%7Bstroke:%23fff%7D.c%7Bstroke:%234c91ff%7D%40media (prefers-color-scheme:dark)%7B.t%7Bfill:%23ededed%7D.b%7Bstroke:%230a0a0a%7D.c%7Bstroke:%230a66e4%7D%7D%3C/style%3E%3Crect class=%27t%27 x=%271%27 y=%271%27 width=%2722%27 height=%2722%27 rx=%276%27/%3E%3Cpath class=%27b%27 d=%27M6.5 7.5h11M6.5 12h7%27 fill=%27none%27 stroke-width=%272.2%27 stroke-linecap=%27round%27/%3E%3Cpath class=%27c%27 d=%27M6.5 16.4l2.3 2.3 4.4-4.4%27 fill=%27none%27 stroke-width=%272.2%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E">
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="project-kit works with your AI agent to define a project, decide its stack, agree how the team works and plan the backlog, then sets up GitHub and hands over to Spec Kit.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +22,7 @@
   --code: #f4f4f4;
   --ok: #18794e;
   --warn: #a86b00;
+  --mark-check: #4c91ff;
   --sans: "Onest", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", "Cascadia Mono", Consolas, monospace;
   color-scheme: light;
@@ -28,13 +30,13 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0a0a0a; --bg-subtle: #111111; --fg: #ededed; --muted: #a0a0a0; --border: #232323;
-    --border-strong: #333333; --accent: #4c91ff; --code: #161616; --ok: #4cc38a; --warn: #e3a52f;
+    --border-strong: #333333; --accent: #4c91ff; --code: #161616; --ok: #4cc38a; --warn: #e3a52f; --mark-check: #0a66e4;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0a0a0a; --bg-subtle: #111111; --fg: #ededed; --muted: #a0a0a0; --border: #232323;
-  --border-strong: #333333; --accent: #4c91ff; --code: #161616; --ok: #4cc38a; --warn: #e3a52f;
+  --border-strong: #333333; --accent: #4c91ff; --code: #161616; --ok: #4cc38a; --warn: #e3a52f; --mark-check: #0a66e4;
   color-scheme: dark;
 }
 
@@ -253,6 +255,21 @@ td.m { font-family: var(--mono); font-size: 0.85rem; white-space: nowrap; }
 @media (max-width: 900px) { .cmds { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 480px) { .cmd { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 
+/* glossary */
+.gloss-tools { display: flex; gap: 12px 16px; flex-wrap: wrap; align-items: center; margin-bottom: 24px; }
+.gloss-tools .search { margin-bottom: 0; flex: 1 1 280px; }
+.gloss-tools .prompts { margin-top: 0; }
+.gloss { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 48px; margin: 0; }
+.term { display: grid; grid-template-columns: minmax(0, 11em) minmax(0, 1fr); gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border); align-items: baseline; }
+.term dt { font-weight: 600; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.term dt small { display: block; margin-top: 2px; font-weight: 400; font-size: 0.8rem; color: var(--muted); letter-spacing: 0; }
+.term dd { margin: 0; color: var(--muted); font-size: 0.93rem; }
+.more { margin-top: 24px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.term:focus { outline: none; }
+@media (max-width: 900px) { .gloss { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 480px) { .term { grid-template-columns: minmax(0, 1fr); gap: 4px; } }
+
 /* compatibility */
 .compat { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; }
 @media (max-width: 860px) { .compat { grid-template-columns: minmax(0, 1fr); } }
@@ -280,18 +297,19 @@ footer a:hover { color: var(--fg); }
   <symbol id="i-check" viewBox="0 0 16 16"><path d="M3 8.5l3.25 3.25L13 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h9.5M8.75 4.25 12.5 8l-3.75 3.75" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
   <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.75" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="m10.5 10.5 3.25 3.25" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></symbol>
-  <symbol id="i-logo" viewBox="0 0 20 20"><rect x="1" y="1" width="18" height="18" rx="5" fill="currentColor"/><path d="M6 6.5h8M6 10h5.5M6 13.5h3" stroke="var(--bg)" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 24 24"><rect x="1" y="1" width="22" height="22" rx="6" fill="currentColor"/><path d="M6.5 7.5h11M6.5 12h7" fill="none" stroke="var(--bg)" stroke-width="2.2" stroke-linecap="round"/><path d="M6.5 16.4l2.3 2.3 4.4-4.4" fill="none" stroke="var(--mark-check)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
 </svg>
 <div id="app" data-lang="en" data-mode="full">
 
 <header class="nav">
   <div class="wrap">
-    <a class="mark" href="#top"><svg width="20" height="20" aria-hidden="true"><use href="#i-logo"/></svg>project-kit</a>
+    <a class="mark" href="#top"><svg width="22" height="22" aria-hidden="true"><use href="#i-logo"/></svg>project-kit</a>
     <nav class="nav-links" aria-label="Sections" data-label-es="Secciones">
       <a href="#phases"><span lang="en">Phases</span><span lang="es">Fases</span></a>
       <a href="#usage"><span lang="en">Usage</span><span lang="es">Uso</span></a>
       <a href="#tokens">Tokens</a>
       <a href="#commands"><span lang="en">Commands</span><span lang="es">Comandos</span></a>
+      <a href="#glossary"><span lang="en">Glossary</span><span lang="es">Glosario</span></a>
     </nav>
     <div class="nav-end">
       <div class="lang" role="group" aria-label="Language" data-label-es="Idioma">
@@ -322,6 +340,7 @@ footer a:hover { color: var(--fg); }
         <p class="meta">
           <span>Python 3.12+</span><span>MIT</span><span>Alpha</span>
           <a href="#phases"><span lang="en">See the phases</span><span lang="es">Ver las fases</span><svg width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a href="#glossary"><span lang="en">New to these words? Glossary</span><span lang="es">¿Palabras nuevas? Glosario</span><svg width="14" height="14" aria-hidden="true"><use href="#i-arrow"/></svg></a>
         </p>
       </div>
 
@@ -495,6 +514,26 @@ continue</pre>
       </div>
       <div class="cmds" id="cmds"></div>
       <p class="empty" id="none" hidden><span lang="en">No command matches.</span><span lang="es">Ningún comando coincide.</span></p>
+    </div>
+  </section>
+
+  <section class="section" id="glossary">
+    <div class="wrap">
+      <div class="section-head">
+        <h2><span lang="en">Glossary</span><span lang="es">Glosario</span></h2>
+        <p><span lang="en">The words on this page and in your agent's questions, in plain language. For developers and for anyone building with AI for the first time.</span><span lang="es">Las palabras de esta página y de las preguntas de tu agente, en lenguaje llano. Para desarrolladores y para quien construye con IA por primera vez.</span></p>
+      </div>
+      <div class="gloss-tools">
+        <div class="search">
+          <svg width="15" height="15" aria-hidden="true"><use href="#i-search"/></svg>
+          <input id="gq" type="search" autocomplete="off" aria-label="Search the glossary" data-label-es="Buscar en el glosario" placeholder="backlog, PRD, token…">
+        </div>
+        <div class="prompts" id="gcats" role="group" aria-label="Topics" data-label-es="Temas"></div>
+      </div>
+      <dl class="gloss" id="gloss"></dl>
+      <button class="btn more" type="button" id="gmore" hidden></button>
+      <p class="sr-only" id="gstatus" role="status" aria-live="polite"></p>
+      <p class="empty" id="gnone" hidden><span lang="en">No word matches. Try another spelling or a shorter word.</span><span lang="es">Ninguna palabra coincide. Prueba otra forma de escribirla o una palabra más corta.</span></p>
     </div>
   </section>
 
@@ -754,6 +793,126 @@ continue</pre>
     });
   });
 
+  var CATS = [
+    ["all", { en: "All", es: "Todo" }],
+    ["plan", { en: "Planning", es: "Planificación" }],
+    ["code", { en: "Code and GitHub", es: "Código y GitHub" }],
+    ["ai", { en: "AI agents", es: "Agentes de IA" }],
+    ["kit", { en: "project-kit and Spec Kit", es: "project-kit y Spec Kit" }]
+  ];
+  // [category, term, aka (optional, both languages), definition]
+  var GLOSS = [
+    ["plan", "Brief", { en: "", es: "resumen" }, { en: "A short document that says what the project is: the problem, who it is for, what is in and out, and the constraints. project-kit writes it with you in the Discover phase.", es: "Un documento corto que dice qué es el proyecto: el problema, para quién es, qué entra y qué no, y las restricciones. project-kit lo escribe contigo en la fase Descubrir." }],
+    ["plan", "PRD", { en: "product requirements document", es: "documento de requisitos de producto" }, { en: "A longer document that describes everything a product must do. If you already have one, `/pk-import` turns it into a brief, decisions and a backlog.", es: "Un documento más largo que describe todo lo que debe hacer un producto. Si ya tienes uno, `/pk-import` lo convierte en resumen, decisiones y backlog." }],
+    ["plan", "Scope", { en: "", es: "alcance" }, { en: "What a version includes and, just as important, what it leaves out.", es: "Lo que incluye una versión y, igual de importante, lo que deja fuera." }],
+    ["plan", "MVP", { en: "minimum viable product", es: "producto mínimo viable" }, { en: "The smallest version that is useful enough to release and learn from.", es: "La versión más pequeña que ya es útil para publicarla y aprender de ella." }],
+    ["plan", "Roadmap", { en: "", es: "hoja de ruta" }, { en: "The order in which the work will be done, split into phases over time.", es: "El orden en que se hará el trabajo, dividido en fases a lo largo del tiempo." }],
+    ["plan", "Backlog", { en: "", es: "" }, { en: "The list of work still to do, each item described and prioritised. In project-kit it lives in `.project-kit/backlog.json` and becomes issues on GitHub.", es: "La lista del trabajo pendiente, cada elemento descrito y priorizado. En project-kit vive en `.project-kit/backlog.json` y se convierte en issues de GitHub." }],
+    ["plan", "Epic", { en: "", es: "épica" }, { en: "A large piece of work that groups several related issues, such as “payments”.", es: "Un trabajo grande que agrupa varias issues relacionadas, como «pagos»." }],
+    ["plan", "Acceptance criteria", { en: "", es: "criterios de aceptación" }, { en: "The conditions that must be true for an issue to count as done. project-kit names them, such as `login#2`, so tests and specs can point to them.", es: "Las condiciones que deben cumplirse para dar una issue por terminada. project-kit les pone nombre, como `login#2`, para que los tests y las especificaciones los citen." }],
+    ["plan", "Milestone", { en: "", es: "hito" }, { en: "A group of issues with a common goal, usually one phase of the roadmap.", es: "Un grupo de issues con un objetivo común, normalmente una fase de la hoja de ruta." }],
+    ["plan", "ADR", { en: "architecture decision record", es: "registro de decisión de arquitectura" }, { en: "A short file that records one technical decision: the options, the choice and why. Written in the Decide phase, in `docs/adr/`.", es: "Un fichero corto que registra una decisión técnica: las opciones, la elegida y por qué. Se escribe en la fase Decidir, en `docs/adr/`." }],
+    ["plan", "Stack", { en: "tech stack", es: "pila" }, { en: "The technologies a project is built with: language, framework, database, hosting.", es: "Las tecnologías con las que se construye un proyecto: lenguaje, framework, base de datos, alojamiento." }],
+    ["plan", "Monolith, monorepo", { en: "", es: "monolito, monorepo" }, { en: "A monolith is one application deployed as a single piece. A monorepo is one repository that holds several applications or packages.", es: "Un monolito es una aplicación que se despliega como una sola pieza. Un monorepo es un repositorio que contiene varias aplicaciones o paquetes." }],
+    ["plan", "Sign-off", { en: "approval", es: "aprobación" }, { en: "Your explicit OK to close a phase. In project-kit only you give it, with `pjkit approve`.", es: "Tu visto bueno explícito para cerrar una fase. En project-kit solo lo das tú, con `pjkit approve`." }],
+    ["plan", "[NEEDS CLARIFICATION]", { en: "", es: "" }, { en: "A marker for something nobody knows yet. It is written instead of a guess, and a phase cannot be signed off while one remains.", es: "Una marca para algo que aún no se sabe. Se escribe en lugar de inventar, y no se puede aprobar una fase mientras quede alguna." }],
+    ["code", "Repository", { en: "repo", es: "repositorio" }, { en: "The folder of a project together with the full history of its changes.", es: "La carpeta de un proyecto junto con todo el historial de sus cambios." }],
+    ["code", "Git", { en: "", es: "" }, { en: "The tool that records every change to your files, so you can go back and several people can work at once.", es: "La herramienta que guarda cada cambio de tus ficheros, para poder volver atrás y que varias personas trabajen a la vez." }],
+    ["code", "Commit", { en: "", es: "" }, { en: "A saved snapshot of changes, with a message that says what changed.", es: "Una foto guardada de unos cambios, con un mensaje que dice qué cambió." }],
+    ["code", "Branch", { en: "", es: "rama" }, { en: "A parallel line of work. Changes are made on a branch and joined to the main one when they are ready.", es: "Una línea de trabajo paralela. Los cambios se hacen en una rama y se unen a la principal cuando están listos." }],
+    ["code", "Git flow", { en: "", es: "" }, { en: "A way of organising branches: `develop` for ongoing work, `release` to prepare a version, `main` for what is published.", es: "Una forma de organizar las ramas: `develop` para el trabajo en curso, `release` para preparar una versión y `main` para lo publicado." }],
+    ["code", "Pull request", { en: "PR, merge request", es: "PR, merge request" }, { en: "A proposal to join one branch into another. The changes are reviewed and checked before they are accepted.", es: "Una propuesta para unir una rama con otra. Los cambios se revisan y se comprueban antes de aceptarlos." }],
+    ["code", "Merge, squash, rebase", { en: "", es: "" }, { en: "Three ways to bring a branch's changes into another: keep every commit, combine them into one, or replay them on top.", es: "Tres formas de llevar los cambios de una rama a otra: conservar cada commit, juntarlos en uno o reaplicarlos encima." }],
+    ["code", "CI", { en: "continuous integration", es: "integración continua" }, { en: "Checks that run automatically on every change, such as the tests, for example with GitHub Actions.", es: "Comprobaciones que se ejecutan solas en cada cambio, como los tests, por ejemplo con GitHub Actions." }],
+    ["code", "Tests", { en: "", es: "" }, { en: "Code that checks that the code does what it should. A failing test points at what broke.", es: "Código que comprueba que el código hace lo que debe. Un test que falla señala qué se ha roto." }],
+    ["code", "Lint, type check", { en: "", es: "" }, { en: "Tools that find mistakes and style problems without running the program.", es: "Herramientas que encuentran errores y problemas de estilo sin ejecutar el programa." }],
+    ["code", "Issue", { en: "", es: "" }, { en: "One piece of work on GitHub or GitLab: a feature, a task or a bug, with its description and discussion.", es: "Una unidad de trabajo en GitHub o GitLab: una funcionalidad, una tarea o un error, con su descripción y su conversación." }],
+    ["code", "Label, GitHub Project", { en: "", es: "etiqueta, Project" }, { en: "Labels tag issues by kind or priority. A Project is a board that shows the issues by status.", es: "Las etiquetas clasifican las issues por tipo o prioridad. Un Project es un tablero que muestra las issues por estado." }],
+    ["code", "Terminal", { en: "CLI, command line", es: "CLI, línea de comandos" }, { en: "The text window where you type commands such as `pjkit`, `git` or `gh`.", es: "La ventana de texto donde escribes comandos como `pjkit`, `git` o `gh`." }],
+    ["code", "uv", { en: "", es: "" }, { en: "A tool that installs Python and Python programs. It is how `pjkit` is installed.", es: "Una herramienta que instala Python y programas de Python. Con ella se instala `pjkit`." }],
+    ["code", "gh, glab", { en: "", es: "" }, { en: "The official command-line tools of GitHub and GitLab. project-kit uses them to create the milestones and issues.", es: "Las herramientas oficiales de línea de comandos de GitHub y GitLab. project-kit las usa para crear los hitos y las issues." }],
+    ["ai", "AI agent", { en: "coding agent", es: "agente de IA" }, { en: "An AI assistant that can read your files and run commands in your project, such as Claude Code, Codex or Cursor.", es: "Un asistente de IA que puede leer tus ficheros y ejecutar comandos en tu proyecto, como Claude Code, Codex o Cursor." }],
+    ["ai", "Vibecoding", { en: "", es: "" }, { en: "Building software by describing what you want to an AI and letting it write most of the code. A plan makes the result far more predictable.", es: "Construir software describiendo lo que quieres a una IA y dejando que escriba casi todo el código. Un plan hace el resultado mucho más previsible." }],
+    ["ai", "Prompt", { en: "", es: "" }, { en: "What you write to the AI: a question, a request or an instruction.", es: "Lo que le escribes a la IA: una pregunta, una petición o una instrucción." }],
+    ["ai", "Token", { en: "", es: "" }, { en: "The unit AI models measure text in, roughly part of a word. More text in the conversation costs more and fills the context sooner.", es: "La unidad en la que los modelos de IA miden el texto, más o menos un trozo de palabra. Más texto en la conversación cuesta más y llena antes el contexto." }],
+    ["ai", "Context", { en: "context window", es: "ventana de contexto" }, { en: "Everything the model can see at once. Long logs and outputs push the useful parts out, which is why project-kit keeps them short.", es: "Todo lo que el modelo puede ver a la vez. Los logs y salidas largas desplazan lo útil, por eso project-kit los mantiene cortos." }],
+    ["ai", "Skill", { en: "", es: "" }, { en: "A set of instructions the agent loads for one kind of task. project-kit's skills are the `/pk-*` commands.", es: "Un conjunto de instrucciones que el agente carga para un tipo de tarea. Las skills de project-kit son los comandos `/pk-*`." }],
+    ["ai", "Subagent", { en: "", es: "subagente" }, { en: "A helper agent with its own context that does one job and returns a short report, so the main conversation stays clean.", es: "Un agente ayudante con su propio contexto que hace un trabajo y devuelve un informe corto, para que la conversación principal no se llene." }],
+    ["ai", "Model", { en: "Haiku, Sonnet, Opus", es: "Haiku, Sonnet, Opus" }, { en: "The AI behind the agent. Smaller models are faster and cheaper; larger ones judge better. `pjkit models` sets which model each subagent uses (Claude Code only).", es: "La IA que hay detrás del agente. Los modelos pequeños son más rápidos y baratos; los grandes juzgan mejor. `pjkit models` fija qué modelo usa cada subagente (solo en Claude Code)." }],
+    ["ai", "Hook", { en: "", es: "" }, { en: "A command that runs automatically at set moments of an agent session, such as when it starts or after each command.", es: "Un comando que se ejecuta automáticamente en momentos fijos de una sesión del agente, como al empezar o después de cada comando." }],
+    ["kit", "Spec Kit", { en: "", es: "" }, { en: "GitHub's toolkit that turns each feature into a spec, a plan and tasks, and then builds it. project-kit prepares everything before it and hands over to it.", es: "El kit de GitHub que convierte cada funcionalidad en una especificación, un plan y tareas, y después la construye. project-kit prepara todo lo anterior y se lo entrega." }],
+    ["kit", "Spec", { en: "specification", es: "especificación" }, { en: "A written description of one feature, made before writing its code.", es: "Una descripción escrita de una funcionalidad, hecha antes de escribir su código." }],
+    ["kit", "Constitution", { en: "", es: "constitución" }, { en: "Spec Kit's file of rules that every spec must follow. project-kit prepares the input for it from your decisions and workflow.", es: "El fichero de reglas de Spec Kit que toda especificación debe cumplir. project-kit prepara la entrada a partir de tus decisiones y tu flujo de trabajo." }],
+    ["kit", "Phase", { en: "", es: "fase" }, { en: "One step of the definition, such as Discover or Plan. Each one is a skill and ends with your sign-off.", es: "Un paso de la definición, como Descubrir o Planificar. Cada uno es una skill y termina con tu aprobación." }],
+    ["kit", "Provision", { en: "", es: "provisionar" }, { en: "Creating on GitHub what the plan needs: milestones, labels, branches, a Project and the issues.", es: "Crear en GitHub lo que necesita el plan: hitos, etiquetas, ramas, un Project y las issues." }],
+    ["kit", "Dry run", { en: "", es: "simulación" }, { en: "A preview that shows what a command would do, without doing it.", es: "Una vista previa que enseña lo que haría un comando, sin hacerlo." }],
+    ["kit", "Handoff", { en: "", es: "entrega" }, { en: "The last phase: project-kit passes the project to Spec Kit, with the constitution input and the context files ready.", es: "La última fase: project-kit pasa el proyecto a Spec Kit, con la entrada de la constitución y los ficheros de contexto listos." }],
+    ["kit", "Quick mode", { en: "", es: "modo rápido" }, { en: "For small projects: skips the Decide, Workflow and Foundations phases and takes the stack from the brief.", es: "Para proyectos pequeños: se salta las fases Decidir, Flujo y Reglas y toma la pila del resumen." }],
+    ["plan", "Alpha", { en: "", es: "alfa" }, { en: "An early version: it works, but parts are untested and may change. project-kit is in alpha.", es: "Una versión temprana: funciona, pero hay partes sin probar que pueden cambiar. project-kit está en alfa." }],
+    ["code", "Framework", { en: "", es: "" }, { en: "A ready-made base for building a kind of application, such as Next.js for websites or Django for web back ends.", es: "Una base ya hecha para construir un tipo de aplicación, como Next.js para webs o Django para el servidor de una web." }],
+    ["code", "Deploy", { en: "", es: "desplegar" }, { en: "Putting a new version where people can use it, such as a server or a hosting service.", es: "Poner una versión nueva donde la gente pueda usarla, como un servidor o un servicio de alojamiento." }],
+    ["code", "Log", { en: "", es: "registro" }, { en: "The text a program writes while it runs: what it did and what went wrong. Logs can be thousands of lines long.", es: "El texto que escribe un programa mientras funciona: lo que hizo y lo que falló. Un log puede tener miles de líneas." }],
+    ["code", "PyPI", { en: "Python Package Index", es: "" }, { en: "The public catalogue of Python programs. project-kit is published there as `project-kit-cli`.", es: "El catálogo público de programas de Python. project-kit se publica ahí como `project-kit-cli`." }],
+    ["ai", "Context file", { en: "`CLAUDE.md`, `AGENTS.md`", es: "fichero de contexto, `CLAUDE.md`" }, { en: "A file the agent reads at the start of every session to know the project and its rules. `pjkit init` and the Handoff write it.", es: "Un fichero que el agente lee al empezar cada sesión para conocer el proyecto y sus reglas. `pjkit init` y la Entrega lo escriben." }]
+  ];
+  // What a newcomer meets first: shown before "Show all", and first in the full list.
+  var STARTER = ["Repository", "Terminal", "AI agent", "Prompt", "Token", "Brief", "PRD", "Backlog", "Issue", "Commit", "Branch", "Pull request"];
+  var ORDERED = STARTER.map(function (name) { return GLOSS.filter(function (g) { return g[1] === name; })[0]; })
+    .concat(GLOSS.filter(function (g) { return STARTER.indexOf(g[1]) < 0; }));
+  var gcat = "all", gexpanded = false;
+  var gcatsEl = document.getElementById("gcats");
+  CATS.forEach(function (c) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "prompt"; b.id = "gcat-" + c[0];
+    b.addEventListener("click", function () { gcat = c[0]; document.getElementById("gq").value = ""; renderGloss(true); });
+    gcatsEl.appendChild(b);
+  });
+  function esc(s) { return s.replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+  // Commands and file names are written between backticks in the data and shown in mono.
+  function rich(s) { return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>"); }
+  function fold(s) { return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
+  function renderGloss(announce) {
+    var q = fold(document.getElementById("gq").value.trim());
+    // A search looks in every topic; the chips then show "All".
+    var cat = q ? "all" : gcat;
+    CATS.forEach(function (c) {
+      var b = document.getElementById("gcat-" + c[0]);
+      b.textContent = t(c[1]);
+      b.setAttribute("aria-pressed", String(c[0] === cat));
+    });
+    var matches = ORDERED.filter(function (g) { return cat === "all" || g[0] === cat; });
+    if (q) {
+      // Matches on the word itself come before matches inside a definition.
+      matches = matches.map(function (g, i) {
+        var term = fold(g[1]), aka = fold(g[2].en + " " + g[2].es);
+        var rank = term.indexOf(q) === 0 ? 0 : term.indexOf(q) > 0 ? 1 : aka.indexOf(q) >= 0 ? 2
+          : fold(g[3].en + " " + g[3].es).indexOf(q) >= 0 ? 3 : -1;
+        return { g: g, rank: rank, i: i };
+      }).filter(function (m) { return m.rank >= 0; })
+        .sort(function (x, y) { return x.rank - y.rank || x.i - y.i; })
+        .map(function (m) { return m.g; });
+    }
+    var collapsed = cat === "all" && !q && !gexpanded;
+    var shown = collapsed ? matches.slice(0, STARTER.length) : matches;
+    document.getElementById("gloss").innerHTML = shown.map(function (g) {
+      var aka = t(g[2]);
+      return '<div class="term"><dt>' + esc(g[1]) + (aka ? "<small>" + rich(aka) + "</small>" : "") + "</dt><dd>" + rich(t(g[3])) + "</dd></div>";
+    }).join("");
+    var more = document.getElementById("gmore");
+    more.hidden = !collapsed;
+    more.textContent = t({ en: "Show all " + GLOSS.length + " words", es: "Ver las " + GLOSS.length + " palabras" });
+    document.getElementById("gnone").hidden = matches.length > 0;
+    if (announce) document.getElementById("gstatus").textContent = matches.length
+      ? t({ en: shown.length + (shown.length === 1 ? " word" : " words"), es: shown.length + (shown.length === 1 ? " palabra" : " palabras") })
+      : t({ en: "No word matches", es: "Ninguna palabra coincide" });
+  }
+  document.getElementById("gmore").addEventListener("click", function () {
+    gexpanded = true; renderGloss(true);
+    var first = document.querySelectorAll("#gloss .term")[STARTER.length];
+    if (first) { first.setAttribute("tabindex", "-1"); first.focus({ preventScroll: true }); }
+  });
+  document.getElementById("gq").addEventListener("input", function () { renderGloss(true); });
+
   function setLang(l) {
     lang = l; app.dataset.lang = l; document.documentElement.lang = l;
     document.querySelectorAll("[data-set-lang]").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.setLang === l)); });
@@ -762,7 +921,7 @@ continue</pre>
       el.setAttribute("aria-label", l === "es" ? el.dataset.labelEs : el.dataset.labelEn);
     });
     store("pk-lang", l);
-    renderPhases(false); renderPrompts(); renderCmds();
+    renderPhases(false); renderPrompts(); renderCmds(); renderGloss();
   }
   function setMode(m) {
     app.dataset.mode = m;
